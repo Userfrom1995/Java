@@ -1,0 +1,181 @@
+Certainly! Let me explain the code step by step so you can fully understand how it works. Here's the breakdown:
+
+### 1. **Imports**
+```java
+import java.util.Scanner;
+```
+- The `Scanner` class is imported from the `java.util` package to read user input from the console (e.g., matrix dimensions and elements).
+
+### 2. **RowSumThread Class**
+```java
+static class RowSumThread extends Thread {
+    private int[] row;
+    private int rowIndex;
+
+    public RowSumThread(int[] row, int rowIndex) {
+        this.row = row;
+        this.rowIndex = rowIndex;
+    }
+
+    @Override
+    public void run() {
+        int sum = 0;
+        for (int num : row) {
+            sum += num;
+        }
+        System.out.println("Sum of row " + rowIndex + ": " + sum);
+    }
+}
+```
+- **Class Declaration**: `RowSumThread` extends the `Thread` class, meaning it will be a thread that can run concurrently with others.
+  
+- **Instance Variables**:
+  - `private int[] row`: This array holds the elements of a particular row in the matrix.
+  - `private int rowIndex`: This variable stores the index of the row (used to print the correct row number).
+
+- **Constructor**:
+  - The constructor takes two parameters:
+    - `row`: The array of integers representing a row in the matrix.
+    - `rowIndex`: The index of the row (to identify which row we are processing).
+
+- **run() Method**:
+  - This method is called when the thread starts. It's where the thread performs its task (i.e., calculating the sum of a row).
+  - It initializes a variable `sum` to 0.
+  - Then, it loops through each element in the `row` array and adds each element to `sum`.
+  - After the loop finishes, it prints the sum of the row using `System.out.println()`.
+
+### 3. **Main Method**
+```java
+public static void main(String[] args) {
+    Scanner scanner = new Scanner(System.in);
+    
+    // Read matrix dimensions
+    System.out.print("Enter the number of rows (m): ");
+    int m = scanner.nextInt();
+    
+    System.out.print("Enter the number of columns (n): ");
+    int n = scanner.nextInt();
+    
+    // Create matrix A with m rows and n columns
+    int[][] matrix = new int[m][n];
+    
+    // Read matrix elements
+    System.out.println("Enter the elements of the matrix:");
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < n; j++) {
+            matrix[i][j] = scanner.nextInt();
+        }
+    }
+    
+    // Create and start m threads to compute the row sums
+    Thread[] threads = new Thread[m];
+    
+    for (int i = 0; i < m; i++) {
+        // Create a thread for each row
+        threads[i] = new RowSumThread(matrix[i], i);
+        // Start the thread
+        threads[i].start();
+    }
+    
+    // Wait for all threads to finish
+    try {
+        for (int i = 0; i < m; i++) {
+            threads[i].join();
+        }
+    } catch (InterruptedException e) {
+        e.printStackTrace();
+    }
+    
+    // Close the scanner
+    scanner.close();
+}
+```
+
+#### Key Sections in the `main()` Method:
+
+1. **Input the Matrix Dimensions**:
+   ```java
+   System.out.print("Enter the number of rows (m): ");
+   int m = scanner.nextInt();
+   
+   System.out.print("Enter the number of columns (n): ");
+   int n = scanner.nextInt();
+   ```
+   - The program first prompts the user to enter the number of rows (`m`) and columns (`n`) of the matrix.
+
+2. **Initialize the Matrix**:
+   ```java
+   int[][] matrix = new int[m][n];
+   ```
+   - A 2D array `matrix` of size `m x n` is created to store the matrix elements.
+
+3. **Input Matrix Elements**:
+   ```java
+   System.out.println("Enter the elements of the matrix:");
+   for (int i = 0; i < m; i++) {
+       for (int j = 0; j < n; j++) {
+           matrix[i][j] = scanner.nextInt();
+       }
+   }
+   ```
+   - The program prompts the user to enter each element of the matrix. The nested `for` loops iterate over all rows (`i`) and columns (`j`), reading each integer and storing it in the `matrix` array.
+
+4. **Create and Start Threads**:
+   ```java
+   Thread[] threads = new Thread[m];
+   
+   for (int i = 0; i < m; i++) {
+       threads[i] = new RowSumThread(matrix[i], i);
+       threads[i].start();
+   }
+   ```
+   - The program creates an array `threads` of `Thread` objects, one for each row of the matrix.
+   - For each row `i`, a new `RowSumThread` is created, passing the row (`matrix[i]`) and the row index (`i`) to the constructor.
+   - `start()` is called on each thread to begin its execution. Each thread will execute its `run()` method, which computes the sum of the corresponding row.
+
+5. **Wait for All Threads to Finish**:
+   ```java
+   try {
+       for (int i = 0; i < m; i++) {
+           threads[i].join();
+       }
+   } catch (InterruptedException e) {
+       e.printStackTrace();
+   }
+   ```
+   - The `join()` method ensures that the main thread (the one running `main()`) waits for all the worker threads to finish before continuing. Without `join()`, the main thread might exit before the worker threads finish computing the sums.
+
+6. **Close the Scanner**:
+   ```java
+   scanner.close();
+   ```
+   - The `Scanner` object is closed to release the resources it holds after we're done reading inputs.
+
+### Why Use Threads?
+- Each row of the matrix is independent of the others when calculating the sum, so we can use multiple threads to calculate the row sums concurrently (in parallel).
+- This can speed up the computation if there are many rows and the system has multiple CPU cores to handle the threads simultaneously.
+
+### Example Input/Output
+
+**Input**:
+```
+Enter the number of rows (m): 3
+Enter the number of columns (n): 4
+Enter the elements of the matrix:
+1 2 3 4
+5 6 7 8
+9 10 11 12
+```
+
+**Output** (order may vary due to threading):
+```
+Sum of row 0: 10
+Sum of row 1: 26
+Sum of row 2: 42
+```
+
+### Summary:
+- **Multithreading**: Each row's sum is calculated in a separate thread. This allows multiple rows to be processed simultaneously, taking advantage of modern multi-core processors.
+- **Concurrency**: Since each thread works on a different row, there is no need for synchronization, and they can run independently.
+- **Thread Management**: The program creates threads dynamically, waits for all threads to finish using `join()`, and prints the results after computation.
+
